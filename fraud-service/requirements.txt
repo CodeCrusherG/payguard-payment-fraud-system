@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+kafka-python
+pydantic
+numpy
+scikit-learn
+psycopg2-binary
