@@ -1,9 +1,12 @@
 import json
 from kafka import KafkaProducer
-
+import os
 
 producer = KafkaProducer(
-    bootstrap_servers="localhost:9092",
+    bootstrap_servers=os.getenv(
+    "KAFKA_BOOTSTRAP_SERVERS",
+    "localhost:9092"
+),
     value_serializer=lambda value:
         json.dumps(value).encode("utf-8")
 )

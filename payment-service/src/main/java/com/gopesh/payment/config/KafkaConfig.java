@@ -1,7 +1,7 @@
 package com.gopesh.payment.config;
 import com.gopesh.payment.event.PaymentCreatedEvent;
 import com.gopesh.payment.event.FraudDecisionEvent;
-
+import org.springframework.beans.factory.annotation.Value;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -29,7 +29,8 @@ import java.util.Map;
 
 @Configuration
 public class KafkaConfig {
-
+    @Value("${spring.kafka.bootstrap-servers}")
+private String bootstrapServers;
     @Bean
     public NewTopic paymentCreatedTopic() {
         return new NewTopic("payment-created", 3, (short) 1);
@@ -56,7 +57,7 @@ public class KafkaConfig {
 
         props.put(
             org.apache.kafka.clients.consumer.ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
-            "localhost:9092"
+            bootstrapServers
         );
 
         props.put(
@@ -99,7 +100,7 @@ public class KafkaConfig {
 
         props.put(
             org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-            "localhost:9092"
+            bootstrapServers
         );
 
         props.put(
@@ -166,7 +167,7 @@ public ProducerFactory<String, PaymentCreatedEvent> paymentProducerFactory() {
 
     props.put(
         org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-        "localhost:9092"
+        bootstrapServers
     );
 
     props.put(
