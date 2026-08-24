@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import org.apache.kafka.clients.admin.NewTopic;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 
@@ -192,7 +193,7 @@ public class KafkaConfig {
             new DeadLetterPublishingRecoverer(
                 kafkaTemplate,
                 (record, exception) ->
-                    new org.apache.kafka.common.TopicPartition(
+                    new TopicPartition(
                         record.topic() + ".DLT",
                         record.partition()
                     )
