@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import "./App.css";
 
-const API = "http://localhost:8080";
-
+const API = "https://payguard-payment-fraud-system.onrender.com";
 function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
 
