@@ -1,13 +1,15 @@
 package com.gopesh.payment.config;
+
 import com.gopesh.payment.event.PaymentCreatedEvent;
 import com.gopesh.payment.event.FraudDecisionEvent;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
@@ -29,21 +31,63 @@ import java.util.Map;
 
 @Configuration
 public class KafkaConfig {
+
     @Value("${spring.kafka.bootstrap-servers}")
-private String bootstrapServers;
+    private String bootstrapServers;
+
+    // --------------------------------------------------
+    // COMMON KAFKA SECURITY CONFIGURATION
+    // --------------------------------------------------
+
+    private void addKafkaSecurityProperties(Map<String, Object> props) {
+
+        props.put(
+            "security.protocol",
+            "SASL_SSL"
+        );
+
+        props.put(
+            "sasl.mechanism",
+            "SCRAM-SHA-256"
+        );
+
+        props.put(
+            "sasl.jaas.config",
+            "org.apache.kafka.common.security.scram.ScramLoginModule required " +
+            "username=\"" + System.getenv("KAFKA_SASL_USERNAME") + "\" " +
+            "password=\"" + System.getenv("KAFKA_SASL_PASSWORD") + "\";"
+        );
+    }
+
+    // --------------------------------------------------
+    // KAFKA TOPICS
+    // --------------------------------------------------
+
     @Bean
     public NewTopic paymentCreatedTopic() {
-        return new NewTopic("payment-created", 3, (short) 1);
+        return new NewTopic(
+            "payment-created",
+            3,
+            (short) 1
+        );
     }
 
     @Bean
     public NewTopic fraudDecisionTopic() {
-        return new NewTopic("fraud-decision", 3, (short) 1);
+        return new NewTopic(
+            "fraud-decision",
+            3,
+            (short) 1
+        );
     }
 
     @Bean
     public NewTopic fraudDecisionDltTopic() {
-        return new NewTopic("fraud-decision.DLT", 3, (short) 1);
+        return new NewTopic(
+            "fraud-decision.DLT",
+            3,
+            (short) 1
+        );
     }
 
     // --------------------------------------------------
@@ -75,6 +119,8 @@ private String bootstrapServers;
             JsonDeserializer.class
         );
 
+        addKafkaSecurityProperties(props);
+
         JsonDeserializer<FraudDecisionEvent> deserializer =
             new JsonDeserializer<>(FraudDecisionEvent.class);
 
@@ -90,7 +136,7 @@ private String bootstrapServers;
     }
 
     // --------------------------------------------------
-    // KAFKA PRODUCER
+    // FRAUD DECISION PRODUCER
     // --------------------------------------------------
 
     @Bean
@@ -112,6 +158,8 @@ private String bootstrapServers;
             org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
             JsonSerializer.class
         );
+
+        addKafkaSecurityProperties(props);
 
         return new DefaultKafkaProducerFactory<>(props);
     }
@@ -160,34 +208,41 @@ private String bootstrapServers;
 
         return factory;
     }
+
+    // --------------------------------------------------
+    // PAYMENT CREATED PRODUCER
+    // --------------------------------------------------
+
     @Bean
-public ProducerFactory<String, PaymentCreatedEvent> paymentProducerFactory() {
+    public ProducerFactory<String, PaymentCreatedEvent> paymentProducerFactory() {
 
-    Map<String, Object> props = new HashMap<>();
+        Map<String, Object> props = new HashMap<>();
 
-    props.put(
-        org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-        bootstrapServers
-    );
+        props.put(
+            org.apache.kafka.clients.producer.ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
+            bootstrapServers
+        );
 
-    props.put(
-        org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-        StringSerializer.class
-    );
+        props.put(
+            org.apache.kafka.clients.producer.ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
+            StringSerializer.class
+        );
 
-    props.put(
-        org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-        JsonSerializer.class
-    );
+        props.put(
+            org.apache.kafka.clients.producer.ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+            JsonSerializer.class
+        );
 
-    return new DefaultKafkaProducerFactory<>(props);
-}
+        addKafkaSecurityProperties(props);
 
-@Bean
-public KafkaTemplate<String, PaymentCreatedEvent> paymentKafkaTemplate(
-    ProducerFactory<String, PaymentCreatedEvent> paymentProducerFactory
-) {
+        return new DefaultKafkaProducerFactory<>(props);
+    }
 
-    return new KafkaTemplate<>(paymentProducerFactory);
-}
+    @Bean
+    public KafkaTemplate<String, PaymentCreatedEvent> paymentKafkaTemplate(
+        ProducerFactory<String, PaymentCreatedEvent> paymentProducerFactory
+    ) {
+
+        return new KafkaTemplate<>(paymentProducerFactory);
+    }
 }
